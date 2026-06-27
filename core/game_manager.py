@@ -1009,7 +1009,7 @@ class GameManager:
         )
 
         self._txt_c(
-            f"Delivered : {delivered}/4",
+            f"Delivered : {delivered}/{len(self.all_cargo)}",
             self.fnt_md,
             C_WARN,
             SW // 2,
@@ -1144,7 +1144,7 @@ class GameManager:
         )
 
         self._txt_c(
-            f"Delivered : {delivered}/4",
+            f"Delivered : {delivered}/{len(self.all_cargo)}",
             self.fnt_md,
             C_WARN,
             SW // 2,
@@ -1535,8 +1535,8 @@ class GameManager:
 
         # WIN
         self._txt("► WIN", self.fnt_md, C_GOLD, (lx, 390))
-        self._txt("Deliver all 4 cargo", self.fnt_sm, C_TEXT, (lx + 20, 425))
-        self._txt("items to the market.", self.fnt_sm, C_TEXT, (lx + 20, 450))
+        self._txt("Deliver all required", self.fnt_sm, C_TEXT, (lx + 20, 425))
+        self._txt("cargo in each level.", self.fnt_sm, C_TEXT, (lx + 20, 450))
 
         # ---------- RIGHT COLUMN ----------
 
