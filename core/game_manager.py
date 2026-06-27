@@ -256,6 +256,8 @@ class GameManager:
     def _on_key(self, k):
         if self.state == "menu":
             if k == pygame.K_RETURN:
+                self.level = 1
+                self._init_game()
                 self.state = "loading"
             elif k == pygame.K_i:
                 self.state = "instructions"
