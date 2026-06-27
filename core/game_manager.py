@@ -79,10 +79,14 @@ class GameManager:
         self.state = "menu"  # menu, instructions, loading, crossing, victory, drowned
         self._menu_anim = 0.0
         self._load_assets()
+        self.level = 1
+        self.max_level = 3
         pygame.mixer.music.load("assets/sounds/bg_music.mp3")
         pygame.mixer.music.set_volume(0.4)
         pygame.mixer.music.play(-1)
         self._init_game()
+
+        self.previous_state = "loading"
 
     # ── ASSETS ──────────────────────────────────────────────────
     def _load_assets(self):
@@ -136,27 +140,73 @@ class GameManager:
         self.time_left = TIME_LIMIT
         self.merchant_weight = 50
         self.raft_capacity = 100
-        self.score = 0
+        if self.level == 1:
+            self.score = 0
         self.trips = 0
-        self.unlocked = set()
-        self.drowned_count = 0
+
+        if self.level == 1:
+            self.unlocked = set()
+            self.drowned_count = 0
         self._crossing_started = False
         self.previous_state = "loading"
 
         # Create 4 cargo items on LEFT BANK (2x2 grid)
         self.all_cargo = []
         cargo_positions = [
-            (50, 150),  # Food - top left
-            (150, 150),  # Cloth - top right
-            (50, 280),  # Medicine - bottom left
-            (150, 280),  # Weapon - bottom right
+            (10, 90),
+            (150, 90),
+
+            (10, 200),
+            (150, 200),
+
+            (10, 310),
+            (150, 310),
+
+            (10, 420),
+            (150, 420),
         ]
 
-        for i, cargo_type in enumerate(CARGO_TYPES):
-            x, y = cargo_positions[i]
-            c = Cargo(cargo_type, self.cargo_imgs[cargo_type], x, y)
-            self.all_cargo.append(c)
+        if self.level == 1:
+            cargo_list = [
+                "food",
+                "cloth",
+                "medicine",
+                "weapons"
+            ]
 
+        elif self.level == 2:
+            cargo_list = [
+                "food",
+                "food",
+                "cloth",
+                "medicine",
+                "weapons",
+                "weapons"
+            ]
+
+        else:  # level 3
+            cargo_list = [
+                "food",
+                "food",
+                "cloth",
+                "cloth",
+                "medicine",
+                "medicine",
+                "weapons",
+                "weapons"
+            ]
+
+        for i, cargo_type in enumerate(cargo_list):
+            x, y = cargo_positions[i]
+
+            c = Cargo(
+                cargo_type,
+                self.cargo_imgs[cargo_type],
+                x,
+                y
+            )
+
+            self.all_cargo.append(c)
         # Create raft (centered in river)
         raft_x = 270
         raft_y = 250
@@ -297,7 +347,28 @@ class GameManager:
                 self.state = "menu"
 
 
-        elif self.state in ("victory", "drowned", "timeout"):
+
+        elif self.state in (
+
+                "victory",
+
+                "level_complete",
+
+                "drowned",
+
+                "timeout"
+
+        ):
+
+            if self.state == "level_complete":
+
+                if k == pygame.K_SPACE:
+                    self.level += 1
+                    self._init_game()
+                    self.state = "loading"
+
+                elif k == pygame.K_ESCAPE:
+                    self.state = "menu"
 
             if k == pygame.K_r:
                 self._init_game()
@@ -326,7 +397,7 @@ class GameManager:
                     cargo.rect.centerx
                 )
 
-                if distance < 60:
+                if distance < 40:
                     old_cargo = self.merchant.carrying
 
                     old_cargo.set_position(
@@ -412,7 +483,7 @@ class GameManager:
             if c.delivered:
                 delivered += 1
 
-        if delivered == 4:
+        if delivered == len(self.all_cargo):
             print("ALL DELIVERED!")
 
             if self.snd_win:
@@ -426,8 +497,10 @@ class GameManager:
             if self.drowned_count == 0:
                 self._unlock("no_drowns")
 
-
-            self.state = "victory"
+            if self.level < self.max_level:
+                self.state = "level_complete"
+            else:
+                self.state = "victory"
 
         if self.snd_delivered:
             self.snd_delivered.play()
@@ -794,6 +867,8 @@ class GameManager:
             self._draw_crossing()
         elif self.state == "pause":
             self._draw_pause()
+        elif self.state == "level_complete":
+            self._draw_level_complete()
         elif self.state == "victory":
             self._draw_victory()
 
@@ -1144,6 +1219,46 @@ class GameManager:
                     self.fnt_md, C_TEXT, SW // 2, 390)
         self._txt_c("[R] Play Again  |  [ESC] Menu", self.fnt_md, C_TEXT,
                     SW // 2, 450)
+
+    def _draw_level_complete(self):
+
+        self._draw_background()
+
+        ov = pygame.Surface((SW, SH), pygame.SRCALPHA)
+        ov.fill((0, 0, 0, 150))
+        self.screen.blit(ov, (0, 0))
+
+        self._txt_c(
+            f"LEVEL {self.level} COMPLETE!",
+            self.fnt_xl,
+            C_GOLD,
+            SW // 2,
+            200
+        )
+
+        self._txt_c(
+            f"Prepare for Level {self.level + 1}",
+            self.fnt_md,
+            C_GREEN,
+            SW // 2,
+            290
+        )
+
+        self._txt_c(
+            "[SPACE] Next Level",
+            self.fnt_md,
+            C_WHITE,
+            SW // 2,
+            380
+        )
+
+        self._txt_c(
+            "[ESC] Main Menu",
+            self.fnt_sm,
+            C_TEXT,
+            SW // 2,
+            430
+        )
 
     def _draw_drowned(self):
         """Drowned screen."""
